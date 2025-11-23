@@ -10,59 +10,57 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AgendasService } from './agendas.service';
 import { CreateAgendaDto } from './dto/create-agenda.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
+import { KeycloakAuthGuard } from '../auth/guards/keycloak-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequirePermissions } from '../common/decorators/permissions.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiTags('Agendas')
 @Controller('agendas')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(KeycloakAuthGuard, PermissionsGuard)
 @ApiBearerAuth()
 export class AgendasController {
   constructor(private readonly agendasService: AgendasService) {}
 
   @Post()
-  @Roles('gestor')
-  @ApiOperation({ summary: 'Create a new agenda (Gestor only)' })
+  @RequirePermissions('create_agenda')
+  @ApiOperation({ summary: 'Create a new agenda' })
   @ApiResponse({ status: 201, description: 'Agenda created successfully' })
   create(@Body() createAgendaDto: CreateAgendaDto, @CurrentUser() user: any) {
-    return this.agendasService.create(createAgendaDto, user.id);
+    return this.agendasService.create(createAgendaDto, user);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all agendas' })
+  @RequirePermissions('view_agendas', 'view_all_agendas')
+  @ApiOperation({ summary: 'Get all agendas (filtered by permissions)' })
   findAll(@CurrentUser() user: any) {
-    const gestorId = user.role === 'gestor' ? user.id : undefined;
-    return this.agendasService.findAll(gestorId);
+    return this.agendasService.findAll(user);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get agenda by ID' })
+  @RequirePermissions('view_agendas', 'view_all_agendas')
+  @ApiOperation({ summary: 'Get agenda by ID (filtered by permissions)' })
   findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    const gestorId = user.role === 'gestor' ? user.id : undefined;
-    return this.agendasService.findOne(id, gestorId);
+    return this.agendasService.findOne(id, user);
   }
 
   @Post(':id/gestores/:gestorId')
-  @Roles('gestor')
-  @ApiOperation({ summary: 'Add gestor to agenda (Gestor only)' })
+  @RequirePermissions('assign_gestores_to_agendas')
+  @ApiOperation({ summary: 'Add gestor to agenda (Admin only)' })
   addGestor(
     @Param('id') id: string,
     @Param('gestorId') gestorId: string,
-    @CurrentUser() user: any,
   ) {
-    return this.agendasService.addGestor(id, gestorId, user.id);
+    return this.agendasService.addGestor(id, gestorId);
   }
 
   @Delete(':id/gestores/:gestorId')
-  @Roles('gestor')
-  @ApiOperation({ summary: 'Remove gestor from agenda (Gestor only)' })
+  @RequirePermissions('assign_gestores_to_agendas')
+  @ApiOperation({ summary: 'Remove gestor from agenda (Admin only)' })
   removeGestor(
     @Param('id') id: string,
     @Param('gestorId') gestorId: string,
-    @CurrentUser() user: any,
   ) {
-    return this.agendasService.removeGestor(id, gestorId, user.id);
+    return this.agendasService.removeGestor(id, gestorId);
   }
 }

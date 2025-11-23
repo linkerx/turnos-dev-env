@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { RbacModule } from './rbac/rbac.module';
 import { UsersModule } from './users/users.module';
 import { GestoresModule } from './gestores/gestores.module';
 import { AgendasModule } from './agendas/agendas.module';
@@ -37,6 +38,7 @@ import { TurnosModule } from './turnos/turnos.module';
 
     // Feature modules
     AuthModule,
+    RbacModule,
     UsersModule,
     GestoresModule,
     AgendasModule,

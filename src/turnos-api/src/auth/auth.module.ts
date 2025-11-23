@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { KeycloakStrategy } from './strategies/keycloak.strategy';
 import { User } from '../users/user.entity';
 import { Gestor } from '../gestores/gestor.entity';
 
@@ -25,7 +26,7 @@ import { Gestor } from '../gestores/gestor.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, KeycloakStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

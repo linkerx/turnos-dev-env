@@ -19,7 +19,7 @@ export class TimeSlotsService {
     private agendaRepository: Repository<Agenda>,
   ) {}
 
-  async create(createTimeSlotDto: CreateTimeSlotDto, gestorId: string) {
+  async create(createTimeSlotDto: CreateTimeSlotDto, currentUser: any) {
     const { agendaId, startTime, endTime, slotDuration } = createTimeSlotDto;
 
     const start = new Date(startTime);
@@ -29,6 +29,13 @@ export class TimeSlotsService {
     if (start >= end) {
       throw new ConflictException('Start time must be before end time');
     }
+
+    // Only gestores can create time slots (checked by permissions)
+    if (currentUser.userType !== 'gestor') {
+      throw new ForbiddenException('Only gestores can create time slots');
+    }
+
+    const gestorId = currentUser.id;
 
     // Verify agenda exists and gestor has access
     const agenda = await this.agendaRepository.findOne({
@@ -127,10 +134,15 @@ export class TimeSlotsService {
     return timeSlot;
   }
 
-  async remove(id: string, gestorId: string) {
+  async remove(id: string, currentUser: any) {
     const timeSlot = await this.findOne(id);
 
-    if (timeSlot.gestorId !== gestorId) {
+    // Solo el gestor dueño o admin con view_all_calendars pueden borrar
+    const canDelete =
+      currentUser.userType === 'gestor' && timeSlot.gestorId === currentUser.id ||
+      currentUser.permissions.includes('view_all_calendars');
+
+    if (!canDelete) {
       throw new ForbiddenException('You can only delete your own time slots');
     }
 
