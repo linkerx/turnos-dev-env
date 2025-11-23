@@ -14,18 +14,15 @@ export class AgendasService {
     private gestorRepository: Repository<Gestor>,
   ) {}
 
-  async create(createAgendaDto: CreateAgendaDto, currentGestorId: string) {
+  async create(createAgendaDto: CreateAgendaDto, currentUser: any) {
     const { nombre, descripcion, gestorIds } = createAgendaDto;
-
-    // Ensure current gestor is included
-    const allGestorIds = [...new Set([...gestorIds, currentGestorId])];
 
     // Verify all gestores exist
     const gestores = await this.gestorRepository.find({
-      where: { id: In(allGestorIds) },
+      where: { id: In(gestorIds) },
     });
 
-    if (gestores.length !== allGestorIds.length) {
+    if (gestores.length !== gestorIds.length) {
       throw new NotFoundException('One or more gestores not found');
     }
 
@@ -38,45 +35,70 @@ export class AgendasService {
     return this.agendaRepository.save(agenda);
   }
 
-  async findAll(gestorId?: string) {
-    if (gestorId) {
+  async findAll(currentUser: any) {
+    const hasViewAllPermission = currentUser.permissions.includes('view_all_agendas');
+
+    // Si tiene permiso view_all_agendas, devolver todas las agendas
+    if (hasViewAllPermission) {
+      return this.agendaRepository.find({
+        where: { activa: true },
+        relations: ['gestores'],
+      });
+    }
+
+    // Si es gestor, solo devolver sus agendas
+    if (currentUser.userType === 'gestor') {
       return this.agendaRepository
         .createQueryBuilder('agenda')
         .leftJoinAndSelect('agenda.gestores', 'gestor')
-        .where('gestor.id = :gestorId', { gestorId })
+        .where('gestor.id = :gestorId', { gestorId: currentUser.id })
         .andWhere('agenda.activa = :activa', { activa: true })
         .getMany();
     }
 
-    return this.agendaRepository.find({
-      where: { activa: true },
-      relations: ['gestores'],
-    });
+    // Usuarios normales no tienen acceso a agendas
+    return [];
   }
 
-  async findOne(id: string, gestorId?: string) {
+  async findOne(id: string, currentUser: any) {
     const agenda = await this.agendaRepository.findOne({
       where: { id },
-      relations: ['gestores', 'timeSlots'],
+      relations: ['gestores', 'espacios'],
     });
 
     if (!agenda) {
       throw new NotFoundException('Agenda not found');
     }
 
-    // If gestorId is provided, verify access
-    if (gestorId) {
-      const hasAccess = agenda.gestores.some((g) => g.id === gestorId);
+    const hasViewAllPermission = currentUser.permissions.includes('view_all_agendas');
+
+    // Si tiene permiso view_all_agendas, permitir acceso
+    if (hasViewAllPermission) {
+      return agenda;
+    }
+
+    // Si es gestor, verificar que esté en la agenda
+    if (currentUser.userType === 'gestor') {
+      const hasAccess = agenda.gestores.some((g) => g.id === currentUser.id);
       if (!hasAccess) {
         throw new ForbiddenException('You do not have access to this agenda');
       }
+      return agenda;
     }
 
-    return agenda;
+    // Usuarios normales no tienen acceso
+    throw new ForbiddenException('You do not have access to this agenda');
   }
 
-  async addGestor(agendaId: string, gestorId: string, currentGestorId: string) {
-    const agenda = await this.findOne(agendaId, currentGestorId);
+  async addGestor(agendaId: string, gestorId: string) {
+    const agenda = await this.agendaRepository.findOne({
+      where: { id: agendaId },
+      relations: ['gestores'],
+    });
+
+    if (!agenda) {
+      throw new NotFoundException('Agenda not found');
+    }
 
     const gestor = await this.gestorRepository.findOne({ where: { id: gestorId } });
     if (!gestor) {
@@ -93,8 +115,15 @@ export class AgendasService {
     return this.agendaRepository.save(agenda);
   }
 
-  async removeGestor(agendaId: string, gestorId: string, currentGestorId: string) {
-    const agenda = await this.findOne(agendaId, currentGestorId);
+  async removeGestor(agendaId: string, gestorId: string) {
+    const agenda = await this.agendaRepository.findOne({
+      where: { id: agendaId },
+      relations: ['gestores'],
+    });
+
+    if (!agenda) {
+      throw new NotFoundException('Agenda not found');
+    }
 
     // Don't allow removing the last gestor
     if (agenda.gestores.length === 1) {

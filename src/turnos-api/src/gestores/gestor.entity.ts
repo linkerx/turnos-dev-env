@@ -6,9 +6,13 @@ import {
   UpdateDateColumn,
   OneToMany,
   ManyToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-import { TimeSlot } from '../time-slots/time-slot.entity';
+import { Espacio } from '../espacios/espacio.entity';
 import { Agenda } from '../agendas/agenda.entity';
+import { Role } from '../rbac/entities/role.entity';
+import { Grupo } from '../grupos/grupo.entity';
 
 @Entity('gestores')
 export class Gestor {
@@ -18,7 +22,7 @@ export class Gestor {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column()
@@ -27,11 +31,21 @@ export class Gestor {
   @Column({ nullable: true })
   telefono: string;
 
+  @Column({ nullable: true })
+  keycloakId: string; // ID del usuario en Keycloak
+
+  @ManyToOne(() => Role, (role) => role.gestores, { eager: true })
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
+
   @ManyToMany(() => Agenda, (agenda) => agenda.gestores)
   agendas: Agenda[];
 
-  @OneToMany(() => TimeSlot, (timeSlot) => timeSlot.gestor)
-  timeSlots: TimeSlot[];
+  @ManyToMany(() => Grupo, (grupo) => grupo.gestores)
+  grupos: Grupo[];
+
+  @OneToMany(() => Espacio, (espacio) => espacio.gestor)
+  espacios: Espacio[];
 
   @CreateDateColumn()
   createdAt: Date;

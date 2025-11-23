@@ -4,15 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
-import { Espacio } from '../espacios/espacio.entity';
 import { Gestor } from '../gestores/gestor.entity';
 
-@Entity('agendas')
-export class Agenda {
+@Entity('grupos')
+export class Grupo {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -23,18 +22,15 @@ export class Agenda {
   descripcion: string;
 
   @Column({ default: true })
-  activa: boolean;
+  activo: boolean;
 
-  @ManyToMany(() => Gestor, (gestor) => gestor.agendas)
+  @ManyToMany(() => Gestor, (gestor) => gestor.grupos, { eager: true })
   @JoinTable({
-    name: 'agenda_gestores',
-    joinColumn: { name: 'agenda_id', referencedColumnName: 'id' },
+    name: 'grupo_gestores',
+    joinColumn: { name: 'grupo_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'gestor_id', referencedColumnName: 'id' },
   })
   gestores: Gestor[];
-
-  @OneToMany(() => Espacio, (espacio) => espacio.agenda)
-  espacios: Espacio[];
 
   @CreateDateColumn()
   createdAt: Date;

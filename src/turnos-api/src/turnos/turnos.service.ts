@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Turno, TurnoStatus } from './turno.entity';
-import { TimeSlot } from '../time-slots/time-slot.entity';
+import { Espacio } from '../espacios/espacio.entity';
 import { CreateTurnoDto } from './dto/create-turno.dto';
 
 @Injectable()
@@ -15,45 +15,45 @@ export class TurnosService {
   constructor(
     @InjectRepository(Turno)
     private turnoRepository: Repository<Turno>,
-    @InjectRepository(TimeSlot)
-    private timeSlotRepository: Repository<TimeSlot>,
+    @InjectRepository(Espacio)
+    private espacioRepository: Repository<Espacio>,
   ) {}
 
   async create(createTurnoDto: CreateTurnoDto, userId: string) {
-    const { timeSlotId, startTime, notas } = createTurnoDto;
+    const { espacioId, startTime, notas } = createTurnoDto;
 
     const start = new Date(startTime);
 
-    // Find the time slot
-    const timeSlot = await this.timeSlotRepository.findOne({
-      where: { id: timeSlotId },
+    // Find the espacio
+    const espacio = await this.espacioRepository.findOne({
+      where: { id: espacioId },
       relations: ['turnos'],
     });
 
-    if (!timeSlot) {
-      throw new NotFoundException('Time slot not found');
+    if (!espacio) {
+      throw new NotFoundException('Espacio not found');
     }
 
-    if (!timeSlot.activo) {
-      throw new ConflictException('Time slot is not active');
+    if (!espacio.activo) {
+      throw new ConflictException('Espacio is not active');
     }
 
-    // Validate start time is within time slot bounds
-    if (start < timeSlot.startTime || start >= timeSlot.endTime) {
-      throw new ConflictException('Start time must be within the time slot range');
+    // Validate start time is within espacio bounds
+    if (start < espacio.startTime || start >= espacio.endTime) {
+      throw new ConflictException('Start time must be within the espacio range');
     }
 
     // Calculate end time based on slot duration
-    const end = new Date(start.getTime() + timeSlot.slotDuration * 60000);
+    const end = new Date(start.getTime() + espacio.slotDuration * 60000);
 
-    if (end > timeSlot.endTime) {
-      throw new ConflictException('Turno would exceed time slot end time');
+    if (end > espacio.endTime) {
+      throw new ConflictException('Turno would exceed espacio end time');
     }
 
     // Check if the exact time slot is already taken
     const existingTurno = await this.turnoRepository.findOne({
       where: {
-        timeSlotId,
+        espacioId,
         startTime: start,
         status: TurnoStatus.CONFIRMED,
       },
@@ -65,7 +65,7 @@ export class TurnosService {
 
     // Create the turno
     const turno = this.turnoRepository.create({
-      timeSlotId,
+      espacioId,
       userId,
       startTime: start,
       endTime: end,
@@ -79,7 +79,7 @@ export class TurnosService {
   async findByUser(userId: string) {
     return this.turnoRepository.find({
       where: { userId },
-      relations: ['timeSlot', 'timeSlot.gestor', 'timeSlot.agenda'],
+      relations: ['espacio', 'espacio.gestor', 'espacio.agenda'],
       order: { startTime: 'ASC' },
     });
   }
@@ -87,10 +87,10 @@ export class TurnosService {
   async findByGestor(gestorId: string) {
     return this.turnoRepository
       .createQueryBuilder('turno')
-      .leftJoinAndSelect('turno.timeSlot', 'timeSlot')
+      .leftJoinAndSelect('turno.espacio', 'espacio')
       .leftJoinAndSelect('turno.user', 'user')
-      .leftJoinAndSelect('timeSlot.agenda', 'agenda')
-      .where('timeSlot.gestorId = :gestorId', { gestorId })
+      .leftJoinAndSelect('espacio.agenda', 'agenda')
+      .where('espacio.gestorId = :gestorId', { gestorId })
       .orderBy('turno.startTime', 'ASC')
       .getMany();
   }
@@ -98,7 +98,7 @@ export class TurnosService {
   async findOne(id: string) {
     const turno = await this.turnoRepository.findOne({
       where: { id },
-      relations: ['timeSlot', 'timeSlot.gestor', 'timeSlot.agenda', 'user'],
+      relations: ['espacio', 'espacio.gestor', 'espacio.agenda', 'user'],
     });
 
     if (!turno) {
@@ -111,7 +111,7 @@ export class TurnosService {
   async confirm(id: string, gestorId: string) {
     const turno = await this.findOne(id);
 
-    if (turno.timeSlot.gestorId !== gestorId) {
+    if (turno.espacio.gestorId !== gestorId) {
       throw new ForbiddenException('You can only confirm your own turnos');
     }
 
@@ -126,13 +126,13 @@ export class TurnosService {
   async cancel(id: string, userId: string, role: 'user' | 'gestor') {
     const turno = await this.findOne(id);
 
-    // Users can cancel their own turnos, gestores can cancel turnos in their time slots
+    // Users can cancel their own turnos, gestores can cancel turnos in their espacios
     if (role === 'user' && turno.userId !== userId) {
       throw new ForbiddenException('You can only cancel your own turnos');
     }
 
-    if (role === 'gestor' && turno.timeSlot.gestorId !== userId) {
-      throw new ForbiddenException('You can only cancel turnos in your time slots');
+    if (role === 'gestor' && turno.espacio.gestorId !== userId) {
+      throw new ForbiddenException('You can only cancel turnos in your espacios');
     }
 
     if (turno.status === TurnoStatus.COMPLETED) {
@@ -146,7 +146,7 @@ export class TurnosService {
   async complete(id: string, gestorId: string) {
     const turno = await this.findOne(id);
 
-    if (turno.timeSlot.gestorId !== gestorId) {
+    if (turno.espacio.gestorId !== gestorId) {
       throw new ForbiddenException('You can only complete your own turnos');
     }
 
@@ -158,19 +158,19 @@ export class TurnosService {
     return this.turnoRepository.save(turno);
   }
 
-  // Helper method to find overlapping time slots (when user wants to choose gestor)
-  async findOverlappingTimeSlots(agendaId: string, startTime: string) {
+  // Helper method to find overlapping espacios (when user wants to choose gestor)
+  async findOverlappingEspacios(agendaId: string, startTime: string) {
     const start = new Date(startTime);
 
-    const timeSlots = await this.timeSlotRepository
-      .createQueryBuilder('ts')
-      .leftJoinAndSelect('ts.gestor', 'gestor')
-      .where('ts.agendaId = :agendaId', { agendaId })
-      .andWhere('ts.activo = :activo', { activo: true })
-      .andWhere('ts.startTime <= :start', { start })
-      .andWhere('ts.endTime > :start', { start })
+    const espacios = await this.espacioRepository
+      .createQueryBuilder('e')
+      .leftJoinAndSelect('e.gestor', 'gestor')
+      .where('e.agendaId = :agendaId', { agendaId })
+      .andWhere('e.activo = :activo', { activo: true })
+      .andWhere('e.startTime <= :start', { start })
+      .andWhere('e.endTime > :start', { start })
       .getMany();
 
-    return timeSlots;
+    return espacios;
   }
 }

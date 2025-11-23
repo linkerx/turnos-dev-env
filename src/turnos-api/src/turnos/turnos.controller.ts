@@ -39,17 +39,17 @@ export class TurnosController {
 
   @Get('gestor/my-turnos')
   @Roles('gestor')
-  @ApiOperation({ summary: 'Get turnos for my time slots (Gestor only)' })
+  @ApiOperation({ summary: 'Get turnos for my espacios (Gestor only)' })
   findGestorTurnos(@CurrentUser() user: any) {
     return this.turnosService.findByGestor(user.id);
   }
 
   @Get('overlapping')
-  @ApiOperation({ summary: 'Find overlapping time slots for a given time' })
+  @ApiOperation({ summary: 'Find overlapping espacios for a given time' })
   @ApiQuery({ name: 'agendaId', required: true })
   @ApiQuery({ name: 'startTime', required: true, example: '2024-01-15T09:00:00Z' })
   findOverlapping(@Query('agendaId') agendaId: string, @Query('startTime') startTime: string) {
-    return this.turnosService.findOverlappingTimeSlots(agendaId, startTime);
+    return this.turnosService.findOverlappingEspacios(agendaId, startTime);
   }
 
   @Get(':id')
