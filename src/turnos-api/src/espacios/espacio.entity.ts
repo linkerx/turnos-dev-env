@@ -10,10 +10,11 @@ import {
 } from 'typeorm';
 import { Agenda } from '../agendas/agenda.entity';
 import { Gestor } from '../gestores/gestor.entity';
+import { Grupo } from '../grupos/grupo.entity';
 import { Turno } from '../turnos/turno.entity';
 
-@Entity('time_slots')
-export class TimeSlot {
+@Entity('espacios')
+export class Espacio {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -21,7 +22,10 @@ export class TimeSlot {
   agendaId: string;
 
   @Column({ type: 'uuid' })
-  gestorId: string;
+  gestorId: string; // Gestor que creó el espacio
+
+  @Column({ type: 'uuid', nullable: true })
+  grupoId: string; // Si es un espacio de grupo
 
   @Column({ type: 'timestamp' })
   startTime: Date;
@@ -35,15 +39,19 @@ export class TimeSlot {
   @Column({ default: true })
   activo: boolean;
 
-  @ManyToOne(() => Agenda, (agenda) => agenda.timeSlots)
+  @ManyToOne(() => Agenda, (agenda) => agenda.espacios)
   @JoinColumn({ name: 'agendaId' })
   agenda: Agenda;
 
-  @ManyToOne(() => Gestor, (gestor) => gestor.timeSlots)
+  @ManyToOne(() => Gestor, (gestor) => gestor.espacios)
   @JoinColumn({ name: 'gestorId' })
   gestor: Gestor;
 
-  @OneToMany(() => Turno, (turno) => turno.timeSlot)
+  @ManyToOne(() => Grupo, { eager: true, nullable: true })
+  @JoinColumn({ name: 'grupoId' })
+  grupo: Grupo;
+
+  @OneToMany(() => Turno, (turno) => turno.espacio)
   turnos: Turno[];
 
   @CreateDateColumn()

@@ -7,7 +7,8 @@ import { Permission } from '../entities/permission.entity';
 import { User } from '../../users/user.entity';
 import { Gestor } from '../../gestores/gestor.entity';
 import { Agenda } from '../../agendas/agenda.entity';
-import { TimeSlot } from '../../time-slots/time-slot.entity';
+import { Espacio } from '../../espacios/espacio.entity';
+import { Grupo } from '../../grupos/grupo.entity';
 import { Turno } from '../../turnos/turno.entity';
 
 // Load environment variables
@@ -23,7 +24,7 @@ const AppDataSource = new DataSource({
   username: configService.get('DB_USERNAME', 'postgres'),
   password: configService.get('DB_PASSWORD', 'postgres'),
   database: configService.get('DB_DATABASE', 'turnos_db'),
-  entities: [Role, Permission, User, Gestor, Agenda, TimeSlot, Turno],
+  entities: [Role, Permission, User, Gestor, Agenda, Espacio, Grupo, Turno],
   synchronize: false,
   logging: false,
 });

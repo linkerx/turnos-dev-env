@@ -8,7 +8,8 @@ import { RbacModule } from './rbac/rbac.module';
 import { UsersModule } from './users/users.module';
 import { GestoresModule } from './gestores/gestores.module';
 import { AgendasModule } from './agendas/agendas.module';
-import { TimeSlotsModule } from './time-slots/time-slots.module';
+import { EspaciosModule } from './espacios/espacios.module';
+import { GruposModule } from './grupos/grupos.module';
 import { TurnosModule } from './turnos/turnos.module';
 
 @Module({
@@ -42,7 +43,8 @@ import { TurnosModule } from './turnos/turnos.module';
     UsersModule,
     GestoresModule,
     AgendasModule,
-    TimeSlotsModule,
+    EspaciosModule,
+    GruposModule,
     TurnosModule,
   ],
   controllers: [AppController],

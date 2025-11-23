@@ -63,7 +63,7 @@ export class AgendasService {
   async findOne(id: string, currentUser: any) {
     const agenda = await this.agendaRepository.findOne({
       where: { id },
-      relations: ['gestores', 'timeSlots'],
+      relations: ['gestores', 'espacios'],
     });
 
     if (!agenda) {

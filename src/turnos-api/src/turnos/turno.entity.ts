@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { TimeSlot } from '../time-slots/time-slot.entity';
+import { Espacio } from '../espacios/espacio.entity';
 import { User } from '../users/user.entity';
 
 export enum TurnoStatus {
@@ -23,7 +23,7 @@ export class Turno {
   id: string;
 
   @Column({ type: 'uuid' })
-  timeSlotId: string;
+  espacioId: string;
 
   @Column({ type: 'uuid' })
   userId: string;
@@ -44,9 +44,9 @@ export class Turno {
   @Column({ nullable: true })
   notas: string;
 
-  @ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.turnos)
-  @JoinColumn({ name: 'timeSlotId' })
-  timeSlot: TimeSlot;
+  @ManyToOne(() => Espacio, (espacio) => espacio.turnos)
+  @JoinColumn({ name: 'espacioId' })
+  espacio: Espacio;
 
   @ManyToOne(() => User, (user) => user.turnos)
   @JoinColumn({ name: 'userId' })

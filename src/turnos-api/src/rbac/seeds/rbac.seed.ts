@@ -66,17 +66,31 @@ export async function seedRbac(dataSource: DataSource) {
       action: 'assign_gestores',
     },
 
-    // Gestión de Calendarios (Time Slots)
+    // Gestión de Grupos
     {
-      name: 'create_time_slot',
-      description: 'Crear espacios de tiempo en el calendario',
-      resource: 'time_slot',
+      name: 'manage_grupos',
+      description: 'Crear, editar y eliminar grupos de gestores (admin)',
+      resource: 'grupo',
+      action: 'manage',
+    },
+    {
+      name: 'view_grupos',
+      description: 'Ver grupos de gestores',
+      resource: 'grupo',
+      action: 'read',
+    },
+
+    // Gestión de Espacios (Calendarios)
+    {
+      name: 'create_espacio',
+      description: 'Crear espacios de tiempo en el calendario (individual o grupo)',
+      resource: 'espacio',
       action: 'create',
     },
     {
-      name: 'view_time_slots',
+      name: 'view_espacios',
       description: 'Ver espacios de tiempo',
-      resource: 'time_slot',
+      resource: 'espacio',
       action: 'read',
     },
     {
@@ -92,9 +106,9 @@ export async function seedRbac(dataSource: DataSource) {
       action: 'read_all',
     },
     {
-      name: 'delete_time_slot',
+      name: 'delete_espacio',
       description: 'Eliminar espacios de tiempo',
-      resource: 'time_slot',
+      resource: 'espacio',
       action: 'delete',
     },
 
@@ -190,10 +204,11 @@ export async function seedRbac(dataSource: DataSource) {
   const gestorPermissions = getPermissionsByNames([
     'view_agendas',
     'create_agenda',
-    'create_time_slot',
-    'view_time_slots',
+    'view_grupos',
+    'create_espacio',
+    'view_espacios',
     'view_own_calendar',
-    'delete_time_slot',
+    'delete_espacio',
     'view_turnos',
   ]);
 
@@ -217,7 +232,7 @@ export async function seedRbac(dataSource: DataSource) {
   // ROL: Usuario (permisos básicos)
   const userPermissions = getPermissionsByNames([
     'view_agendas',
-    'view_time_slots',
+    'view_espacios',
     'create_turno',
     'view_turnos',
     'cancel_turno',

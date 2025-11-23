@@ -9,9 +9,10 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { TimeSlot } from '../time-slots/time-slot.entity';
+import { Espacio } from '../espacios/espacio.entity';
 import { Agenda } from '../agendas/agenda.entity';
 import { Role } from '../rbac/entities/role.entity';
+import { Grupo } from '../grupos/grupo.entity';
 
 @Entity('gestores')
 export class Gestor {
@@ -40,8 +41,11 @@ export class Gestor {
   @ManyToMany(() => Agenda, (agenda) => agenda.gestores)
   agendas: Agenda[];
 
-  @OneToMany(() => TimeSlot, (timeSlot) => timeSlot.gestor)
-  timeSlots: TimeSlot[];
+  @ManyToMany(() => Grupo, (grupo) => grupo.gestores)
+  grupos: Grupo[];
+
+  @OneToMany(() => Espacio, (espacio) => espacio.gestor)
+  espacios: Espacio[];
 
   @CreateDateColumn()
   createdAt: Date;
